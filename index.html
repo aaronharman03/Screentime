@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Controller</title>
+    <title>Vault</title>
     <style>
         body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { border: 2px solid #00ffcc; padding: 40px; width: 420px; text-align: center; }
-        .instruction { font-size: 4rem; font-weight: bold; margin: 30px 0; color: #ff3b30; min-height: 120px; display: flex; align-items: center; justify-content: center; }
-        button { background: #00ffcc; color: #000; border: none; padding: 20px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1.2rem; }
+        .card { border: 1px solid #00ffcc; padding: 40px; width: 400px; text-align: center; }
+        .instruction { font-size: 3.5rem; font-weight: bold; margin: 40px 0; color: #ff3b30; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        button { background: #00ffcc; color: #000; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 12px; width: 90%; margin: 10px 0; text-align: center; }
         .hidden { display: none; }
-        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 15px; width: 90%; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -18,21 +18,15 @@
     <div id="auth-gate" class="card">
         <h1>VAULT_SYNC</h1>
         <input type="email" id="email" placeholder="EMAIL">
-        <input type="password" id="pw" placeholder="LONG_PASSWORD">
+        <input type="password" id="pw" placeholder="PASSWORD">
         <button onclick="handleAuth()">INITIALIZE</button>
     </div>
 
     <div id="app-container" class="card hidden">
-        <div id="display-view" class="hidden">
-            <p>ACTIVE_PIN</p>
-            <h1 id="stored-pin-val" style="font-size: 5rem; letter-spacing: 15px;">----</h1>
-            <button onclick="startScramble()">NEW_LOCK</button>
-        </div>
-
-        <div id="scramble-view" class="hidden">
-            <div id="phase-label" style="color:#00ffcc">PHASE 1: ENTRY</div>
+        <div id="scramble-view">
+            <div id="phase-label" style="font-size: 0.8rem; color:#00ffcc">PHASE 1</div>
             <div class="instruction" id="cmd-text">READY</div>
-            <button onclick="nextStep()">NEXT_COMMAND</button>
+            <button onclick="nextStep()">NEXT_STEP</button>
         </div>
     </div>
 
@@ -55,8 +49,8 @@
         const db = firebase.firestore();
 
         let secretPin = "";
-        let masterPath = [];
-        let index = 0;
+        let steps = [];
+        let currentIdx = 0;
         let p1Len = 0;
 
         async function handleAuth() {
@@ -70,35 +64,24 @@
             if(user) {
                 document.getElementById('auth-gate').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                checkVault();
+                startNewScramble();
             }
         });
 
-        async function checkVault() {
-            const doc = await db.collection("users").doc(auth.currentUser.uid).get();
-            if(doc.exists && doc.data().pin) {
-                showDisplay(doc.data().pin);
-            } else {
-                startScramble();
-            }
-        }
-
-        function generatePath(targetStr) {
-            let target = targetStr.split('');
+        function generatePath(target) {
+            let tArr = target.split('');
             let shadow = [];
             let path = [];
-            while (shadow.join('') !== target.join('')) {
-                // THE 4TH DIGIT FIX: 
-                // If 3 digits are in, the next move MUST be the 4th real digit.
+            while (shadow.join('') !== target) {
+                // FIXED: Force the 4th digit once 3 are in to prevent auto-submit errors
                 if (shadow.length === 3) {
-                    let d = target[3];
-                    path.push("ENTER " + d); shadow.push(d);
+                    path.push("ENTER " + tArr[3]); shadow.push(tArr[3]);
                 } else if (shadow.length === 0) {
-                    let d = (Math.random() > 0.5) ? target[0] : Math.floor(Math.random()*10).toString();
+                    let d = (Math.random() > 0.5) ? tArr[0] : Math.floor(Math.random()*10).toString();
                     path.push("ENTER " + d); shadow.push(d);
                 } else {
                     let r = Math.random();
-                    if (r < 0.4) { let d = target[shadow.length]; path.push("ENTER " + d); shadow.push(d); }
+                    if (r < 0.4) { let d = tArr[shadow.length]; path.push("ENTER " + d); shadow.push(d); }
                     else if (r < 0.7) { let d = Math.floor(Math.random()*10).toString(); path.push("ENTER " + d); shadow.push(d); }
                     else { path.push("DELETE"); shadow.pop(); }
                 }
@@ -106,41 +89,31 @@
             return path;
         }
 
-        function startScramble() {
-            document.getElementById('display-view').classList.add('hidden');
-            document.getElementById('scramble-view').classList.remove('hidden');
+        function startNewScramble() {
             secretPin = Math.floor(1000 + Math.random() * 9000).toString();
             let p1 = generatePath(secretPin);
             let p2 = generatePath(secretPin);
             p1Len = p1.length;
-            masterPath = [...p1, ...p2];
-            index = 0;
-            updateUI();
+            steps = [...p1, ...p2];
+            currentIdx = 0;
+            renderStep();
         }
 
-        function updateUI() {
-            document.getElementById('phase-label').innerText = index >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
-            document.getElementById('cmd-text').innerText = masterPath[index];
+        function renderStep() {
+            document.getElementById('phase-label').innerText = currentIdx >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
+            document.getElementById('cmd-text').innerText = steps[currentIdx];
         }
 
         async function nextStep() {
-            index++;
-            if (index < masterPath.length) {
-                updateUI();
+            currentIdx++;
+            if (currentIdx < steps.length) {
+                renderStep();
             } else {
                 await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
-                alert("SUCCESS: LOCKED.");
-                logout();
+                alert("LOCKED.");
+                auth.signOut().then(() => location.reload());
             }
         }
-
-        function showDisplay(pin) {
-            document.getElementById('scramble-view').classList.add('hidden');
-            document.getElementById('display-view').classList.remove('hidden');
-            document.getElementById('stored-pin-val').innerText = pin;
-        }
-
-        function logout() { auth.signOut().then(() => location.reload()); }
     </script>
 </body>
 </html>
