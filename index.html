@@ -367,40 +367,77 @@
      * that always ends with the 4 correct digits in order, respecting the rule above.
      */
     function generatePath(target) {
+        // Strategy: place each correct digit one at a time, with random
+        // noise (enter fake + delete) woven in between. The 4th correct
+        // digit is always last so iPhone auto-submits the right PIN.
         const path = [];
-        let shadow = [];
-        const TARGET = 30 + Math.floor(Math.random() * 21); // 30-50 steps
+        let shadow = []; // what is currently typed on screen
 
-        while (path.length < TARGET - (shadow.length + 4)) {
-            const canDelete = shadow.length > 0;
-            const canEnter = shadow.length < 3; // never enter 4th digit during random phase
+        function addNoise() {
+            // Add 1-4 random enter/delete pairs that leave shadow unchanged
+            const count = 1 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < count; i++) {
+                if (shadow.length < 3) {
+                    // Enter a random digit then delete it
+                    const fake = Math.floor(Math.random() * 10).toString();
+                    path.push("ENTER " + fake);
+                    shadow.push(fake);
+                    path.push("DELETE");
+                    shadow.pop();
+                }
+            }
+        }
 
-            if (!canEnter && !canDelete) break;
-
-            let action;
-            if (!canDelete) action = 'enter';
-            else if (!canEnter) action = 'delete';
-            else action = Math.random() < 0.6 ? 'enter' : 'delete';
-
-            if (action === 'enter') {
-                const digit = Math.floor(Math.random() * 10).toString();
-                path.push("ENTER " + digit);
-                shadow.push(digit);
-            } else {
+        function deleteBack(n) {
+            // Delete n digits from shadow
+            for (let i = 0; i < n; i++) {
                 path.push("DELETE");
                 shadow.pop();
             }
         }
 
-        // Clear whatever is typed, then enter the correct PIN cleanly
-        while (shadow.length > 0) {
-            path.push("DELETE");
-            shadow.pop();
-        }
-        for (let i = 0; i < 4; i++) {
+        // Place digits 0, 1, 2 with noise and occasional backtrack
+        for (let i = 0; i < 3; i++) {
+            // Sometimes add noise before entering correct digit
+            if (Math.random() < 0.6) addNoise();
+
+            // Enter correct digit
             path.push("ENTER " + target[i]);
             shadow.push(target[i]);
+
+            // Sometimes enter a wrong digit after, then delete back to here
+            if (Math.random() < 0.5 && shadow.length < 3) {
+                const fake = Math.floor(Math.random() * 10).toString();
+                path.push("ENTER " + fake);
+                shadow.push(fake);
+                if (Math.random() < 0.5 && shadow.length < 3) {
+                    const fake2 = Math.floor(Math.random() * 10).toString();
+                    path.push("ENTER " + fake2);
+                    shadow.push(fake2);
+                }
+                // Delete back to after correct digit i
+                deleteBack(shadow.length - (i + 1));
+            }
+
+            // Sometimes delete back past correct digit and re-enter
+            if (Math.random() < 0.3 && i > 0) {
+                const backBy = 1 + Math.floor(Math.random() * (i + 1));
+                deleteBack(backBy);
+                // Re-enter deleted correct digits
+                for (let j = shadow.length; j <= i; j++) {
+                    if (Math.random() < 0.5) addNoise();
+                    path.push("ENTER " + target[j]);
+                    shadow.push(target[j]);
+                }
+            }
         }
+
+        // Final noise before 4th digit (but never enter 4th slot with wrong digit)
+        if (Math.random() < 0.5) addNoise();
+
+        // Enter 4th correct digit last — iPhone auto-submits here
+        path.push("ENTER " + target[3]);
+        shadow.push(target[3]);
 
         return path;
     }
