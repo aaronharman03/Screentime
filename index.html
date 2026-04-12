@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault</title>
+    <title>Vault Sync</title>
     <style>
         body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         .card { border: 1px solid #00ffcc; padding: 40px; width: 400px; text-align: center; }
@@ -24,7 +24,7 @@
 
     <div id="app-container" class="card hidden">
         <div id="scramble-view">
-            <div id="phase-label" style="font-size: 0.8rem; color:#00ffcc">PHASE 1</div>
+            <div id="phase-label" style="font-size: 0.8rem; color:#00ffcc">PHASE 1: ENTRY</div>
             <div class="instruction" id="cmd-text">READY</div>
             <button onclick="nextStep()">NEXT_STEP</button>
         </div>
@@ -68,12 +68,14 @@
             }
         });
 
+        // GENERATOR: Tracks shadow state to respect iPhone auto-submit
         function generatePath(target) {
             let tArr = target.split('');
             let shadow = [];
             let path = [];
+            
             while (shadow.join('') !== target) {
-                // FIXED: Force the 4th digit once 3 are in to prevent auto-submit errors
+                // FIXED: If 3 digits are on phone, next move MUST be the 4th real digit.
                 if (shadow.length === 3) {
                     path.push("ENTER " + tArr[3]); shadow.push(tArr[3]);
                 } else if (shadow.length === 0) {
@@ -93,6 +95,7 @@
             secretPin = Math.floor(1000 + Math.random() * 9000).toString();
             let p1 = generatePath(secretPin);
             let p2 = generatePath(secretPin);
+            
             p1Len = p1.length;
             steps = [...p1, ...p2];
             currentIdx = 0;
@@ -109,6 +112,7 @@
             if (currentIdx < steps.length) {
                 renderStep();
             } else {
+                // Final save and reset
                 await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
                 alert("LOCKED.");
                 auth.signOut().then(() => location.reload());
