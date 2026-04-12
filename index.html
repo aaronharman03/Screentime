@@ -130,25 +130,12 @@
         border-bottom: 1px solid var(--border);
     }
 
-    /* Scramble */
     .phases { display: flex; justify-content: center; gap: 8px; margin-bottom: 6px; }
     .phase-dot { width: 28px; height: 3px; background: var(--dim); transition: background 0.3s; }
     .phase-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .phase-label { font-size: 0.58rem; letter-spacing: 3px; color: #333; margin-bottom: 18px; }
+    .phase-label { font-size: 0.58rem; letter-spacing: 3px; color: #333; margin-bottom: 20px; }
 
-    /* Speed bar — replaces step counter */
-    .speed-bar { height: 2px; background: var(--border); margin-bottom: 20px; overflow: hidden; }
-    .speed-fill {
-        height: 100%;
-        background: var(--green);
-        width: 0%;
-        box-shadow: 0 0 6px var(--green);
-    }
-    .speed-fill.running {
-        transition: width linear;
-    }
-
-    /* Keypad */
+    /* Keypad — no numbers, just position */
     .keypad {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -157,78 +144,53 @@
     }
 
     .key {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.3rem;
-        font-weight: 700;
-        padding: 16px 0;
+        padding: 20px 0;
         border: 1px solid #1a1a1a;
         background: #0a0a0a;
-        color: #2a2a2a;
         cursor: default;
-        transition: all 0.1s;
+        transition: all 0.12s;
     }
 
     .key.highlight {
         border-color: var(--green);
-        color: var(--green);
-        background: rgba(0,255,204,0.07);
-        animation: pulse 0.6s ease-in-out infinite alternate;
-    }
-
-    .key.highlight-del {
-        border-color: var(--red);
-        color: var(--red);
-        background: rgba(255,59,48,0.07);
-        animation: pulse-red 0.6s ease-in-out infinite alternate;
+        background: rgba(0,255,204,0.09);
+        box-shadow: 0 0 18px rgba(0,255,204,0.35);
+        animation: pulse 0.7s ease-in-out infinite alternate;
     }
 
     @keyframes pulse {
-        from { box-shadow: 0 0 6px rgba(0,255,204,0.1); }
-        to   { box-shadow: 0 0 22px rgba(0,255,204,0.6); }
+        from { box-shadow: 0 0 8px rgba(0,255,204,0.15); }
+        to   { box-shadow: 0 0 26px rgba(0,255,204,0.6); }
     }
 
     @keyframes pulse-red {
-        from { box-shadow: 0 0 6px rgba(255,59,48,0.1); }
-        to   { box-shadow: 0 0 22px rgba(255,59,48,0.6); }
+        from { box-shadow: 0 0 8px rgba(255,59,48,0.15); }
+        to   { box-shadow: 0 0 26px rgba(255,59,48,0.6); }
     }
 
     .key-zero { grid-column: 2; }
 
     .key-del {
         width: 100%;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.7rem;
-        letter-spacing: 3px;
-        padding: 13px 0;
+        padding: 14px 0;
         border: 1px solid #1a1a1a;
         background: #0a0a0a;
         color: #2a2a2a;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 3px;
         cursor: default;
-        transition: all 0.1s;
-        margin-bottom: 16px;
+        transition: all 0.12s;
         display: block;
         text-align: center;
+        margin-bottom: 16px;
     }
 
-    /* Fake done screen */
-    #fake-done {
-        text-align: center;
-    }
-
-    .fake-title {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.1rem;
-        letter-spacing: 4px;
-        color: var(--green);
-        margin-bottom: 12px;
-        text-shadow: 0 0 20px rgba(0,255,204,0.5);
-    }
-
-    .fake-sub {
-        font-size: 0.65rem;
-        color: #333;
-        letter-spacing: 2px;
-        margin-bottom: 24px;
+    .key-del.highlight-del {
+        border-color: var(--red);
+        color: var(--red);
+        background: rgba(255,59,48,0.07);
+        animation: pulse-red 0.7s ease-in-out infinite alternate;
     }
 
     .error-msg { color: var(--red); font-size: 0.65rem; letter-spacing: 1px; margin-top: 8px; min-height: 16px; }
@@ -249,7 +211,6 @@
 
 <div id="app-container" class="card hidden">
 
-    <!-- PIN display -->
     <div id="display-view" class="hidden">
         <div class="logo">VAULT<span>_</span></div>
         <div class="pin-label">SCREEN TIME PIN</div>
@@ -258,7 +219,6 @@
         <button class="btn btn-danger" onclick="doLogout()">SIGN OUT</button>
     </div>
 
-    <!-- Scramble -->
     <div id="scramble-view" class="hidden">
         <div class="logo">VAULT<span>_</span></div>
         <div class="phases">
@@ -266,30 +226,22 @@
             <div class="phase-dot" id="dot-2"></div>
         </div>
         <div class="phase-label" id="phase-label">PHASE 1 — ENTRY</div>
-        <div class="speed-bar"><div class="speed-fill" id="speed-fill"></div></div>
 
         <div class="keypad">
-            <div class="key" id="k1">1</div>
-            <div class="key" id="k2">2</div>
-            <div class="key" id="k3">3</div>
-            <div class="key" id="k4">4</div>
-            <div class="key" id="k5">5</div>
-            <div class="key" id="k6">6</div>
-            <div class="key" id="k7">7</div>
-            <div class="key" id="k8">8</div>
-            <div class="key" id="k9">9</div>
-            <div class="key key-zero" id="k0">0</div>
+            <div class="key" id="k1"></div>
+            <div class="key" id="k2"></div>
+            <div class="key" id="k3"></div>
+            <div class="key" id="k4"></div>
+            <div class="key" id="k5"></div>
+            <div class="key" id="k6"></div>
+            <div class="key" id="k7"></div>
+            <div class="key" id="k8"></div>
+            <div class="key" id="k9"></div>
+            <div class="key key-zero" id="k0"></div>
         </div>
         <div class="key-del" id="kdel">DELETE</div>
-    </div>
 
-    <!-- Fake done screen shown mid-sequence -->
-    <div id="fake-done" class="hidden">
-        <div class="fake-title">PIN SET</div>
-        <div class="fake-sub">SYNCHRONISING...</div>
-        <div class="speed-bar" style="margin-bottom:0">
-            <div class="speed-fill" id="fake-prog"></div>
-        </div>
+        <button class="btn" onclick="nextStep()">NEXT</button>
     </div>
 
 </div>
@@ -316,9 +268,7 @@
     let masterSteps = [];
     let index = 0;
     let p1Len = 0;
-    let autoTimer = null;
 
-    // ── Auth ──────────────────────────────────────────────
     async function handleAuth() {
         const e = document.getElementById('email').value.trim();
         const p = document.getElementById('pw').value;
@@ -362,7 +312,10 @@
         document.getElementById('stored-pin-val').textContent = pin;
     }
 
-    // ── Path generation ───────────────────────────────────
+    // Path generation
+    // - Correct digits 1-3 woven into random noise
+    // - 4th digit always correct and always last (iPhone auto-submits)
+    // - Total steps kept between 15-25 per phase (30-50 total)
     function generatePath(target) {
         const path = [];
         let shadow = [];
@@ -385,12 +338,15 @@
         }
 
         for (let i = 0; i < 3; i++) {
+            // 0-2 noise steps before correct digit
             const nb = Math.floor(Math.random() * 3);
             for (let n = 0; n < nb; n++) noise();
 
+            // Enter correct digit
             path.push({ type: 'enter', digit: target[i] });
             shadow.push(target[i]);
 
+            // Sometimes add 1-2 wrong digits after, then delete back
             if (Math.random() < 0.5 && shadow.length < 3) {
                 const f1 = Math.floor(Math.random() * 10).toString();
                 path.push({ type: 'enter', digit: f1 });
@@ -403,59 +359,43 @@
                 deleteBack(shadow.length - (i + 1));
             }
 
+            // Sometimes backtrack and re-enter
             if (Math.random() < 0.3 && i > 0) {
                 const back = 1 + Math.floor(Math.random() * (i + 1));
                 deleteBack(back);
                 for (let j = shadow.length; j <= i; j++) {
-                    const nb2 = Math.floor(Math.random() * 2);
-                    for (let n = 0; n < nb2; n++) noise();
+                    if (Math.random() < 0.5) noise();
                     path.push({ type: 'enter', digit: target[j] });
                     shadow.push(target[j]);
                 }
             }
         }
 
-        if (Math.random() < 0.5) noise();
+        // Optional noise before final digit
+        if (Math.random() < 0.4) noise();
+
+        // 4th digit — always correct, always last
         path.push({ type: 'enter', digit: target[3] });
 
         return path;
     }
 
-    // ── Scramble ──────────────────────────────────────────
     function startScramble() {
         document.getElementById('display-view').classList.add('hidden');
-        document.getElementById('fake-done').classList.add('hidden');
         document.getElementById('scramble-view').classList.remove('hidden');
-
         secretPin = Math.floor(1000 + Math.random() * 9000).toString();
-        const p1 = generatePath(secretPin);
-        const p2 = generatePath(secretPin);
+
+        // Keep generating until total is between 30-50
+        let p1, p2;
+        do {
+            p1 = generatePath(secretPin);
+            p2 = generatePath(secretPin);
+        } while ((p1.length + p2.length) < 30 || (p1.length + p2.length) > 50);
+
         p1Len = p1.length;
         masterSteps = [...p1, ...p2];
         index = 0;
         updateUI();
-        scheduleNext();
-    }
-
-    // Random delay per step: 600ms–1800ms
-    function randomDelay() {
-        return 600 + Math.floor(Math.random() * 1200);
-    }
-
-    function scheduleNext() {
-        if (autoTimer) clearTimeout(autoTimer);
-        const delay = randomDelay();
-        // Animate the speed bar draining over that delay
-        const fill = document.getElementById('speed-fill');
-        fill.style.transition = 'none';
-        fill.style.width = '100%';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                fill.style.transition = 'width ' + delay + 'ms linear';
-                fill.style.width = '0%';
-            });
-        });
-        autoTimer = setTimeout(advanceStep, delay);
     }
 
     function clearHighlights() {
@@ -463,8 +403,7 @@
             const el = document.getElementById('k' + d);
             if (el) el.className = 'key' + (d === '0' ? ' key-zero' : '');
         });
-        const del = document.getElementById('kdel');
-        if (del) del.className = 'key-del';
+        document.getElementById('kdel').className = 'key-del';
     }
 
     function updateUI() {
@@ -484,47 +423,11 @@
         }
     }
 
-    // After phase 1 completes, show fake "PIN SET" screen briefly, then continue phase 2
-    function showFakeDone(callback) {
-        document.getElementById('scramble-view').classList.add('hidden');
-        document.getElementById('fake-done').classList.remove('hidden');
-
-        // Animate fake progress bar
-        const fp = document.getElementById('fake-prog');
-        fp.style.transition = 'none';
-        fp.style.width = '0%';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                const dur = 1500 + Math.floor(Math.random() * 1000);
-                fp.style.transition = 'width ' + dur + 'ms linear';
-                fp.style.width = '100%';
-                setTimeout(() => {
-                    document.getElementById('fake-done').classList.add('hidden');
-                    document.getElementById('scramble-view').classList.remove('hidden');
-                    callback();
-                }, dur + 200);
-            });
-        });
-    }
-
-    async function advanceStep() {
+    async function nextStep() {
         index++;
-
-        if (index === p1Len) {
-            // End of phase 1 — show fake done screen, then continue phase 2
-            clearHighlights();
-            showFakeDone(() => {
-                updateUI();
-                scheduleNext();
-            });
-            return;
-        }
-
         if (index < masterSteps.length) {
             updateUI();
-            scheduleNext();
         } else {
-            // Truly done
             clearHighlights();
             await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
             await auth.signOut();
