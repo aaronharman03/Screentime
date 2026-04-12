@@ -15,7 +15,7 @@
         --bg: #000;
         --card-bg: #080808;
         --border: #1a1a1a;
-        --dim: #333;
+        --dim: #222;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,21 +28,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
     }
 
-    /* Scanline overlay */
     body::after {
         content: '';
         position: fixed;
         inset: 0;
-        background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0,255,204,0.015) 2px,
-            rgba(0,255,204,0.015) 4px
-        );
+        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,204,0.012) 2px, rgba(0,255,204,0.012) 4px);
         pointer-events: none;
         z-index: 999;
     }
@@ -50,16 +42,16 @@
     .card {
         border: 1px solid var(--green);
         background: var(--card-bg);
-        padding: 36px 32px;
-        width: 340px;
+        padding: 32px 28px;
+        width: 320px;
         text-align: center;
         position: relative;
-        box-shadow: 0 0 40px rgba(0,255,204,0.08), inset 0 0 40px rgba(0,255,204,0.02);
-        animation: fadeIn 0.4s ease;
+        box-shadow: 0 0 40px rgba(0,255,204,0.07), inset 0 0 40px rgba(0,255,204,0.02);
+        animation: fadeIn 0.3s ease;
     }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
+        from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
@@ -74,19 +66,19 @@
     .logo {
         font-family: 'Orbitron', sans-serif;
         font-weight: 900;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         letter-spacing: 6px;
         color: var(--green);
-        margin-bottom: 28px;
+        margin-bottom: 24px;
         text-shadow: 0 0 20px rgba(0,255,204,0.4);
     }
 
-    .logo span { color: var(--dim); }
+    .logo span { color: #333; }
 
     input {
         background: #0a0a0a;
         color: var(--green);
-        border: 1px solid var(--dim);
+        border: 1px solid #2a2a2a;
         padding: 12px 14px;
         width: 100%;
         margin-bottom: 10px;
@@ -98,144 +90,125 @@
     }
 
     input:focus { border-color: var(--green); }
-    input::placeholder { color: #2a2a2a; }
+    input::placeholder { color: #222; }
 
     .btn {
         background: transparent;
         color: var(--green);
         border: 1px solid var(--green);
-        padding: 13px;
+        padding: 12px;
         width: 100%;
         font-family: 'Orbitron', sans-serif;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 3px;
         cursor: pointer;
-        margin-top: 6px;
+        margin-top: 8px;
         transition: background 0.2s, color 0.2s, box-shadow 0.2s;
     }
 
-    .btn:hover {
-        background: var(--green);
-        color: #000;
-        box-shadow: 0 0 20px rgba(0,255,204,0.3);
-    }
-
+    .btn:hover { background: var(--green); color: #000; box-shadow: 0 0 20px rgba(0,255,204,0.3); }
     .btn:active { opacity: 0.7; }
 
-    .btn-danger {
-        border-color: var(--red);
-        color: var(--red);
-        margin-top: 12px;
-    }
-
-    .btn-danger:hover {
-        background: var(--red);
-        color: #000;
-        box-shadow: 0 0 20px rgba(255,59,48,0.3);
-    }
+    .btn-danger { border-color: var(--red); color: var(--red); margin-top: 10px; }
+    .btn-danger:hover { background: var(--red); color: #000; box-shadow: 0 0 20px rgba(255,59,48,0.3); }
 
     .hidden { display: none !important; }
 
-    /* PIN display */
-    .pin-label {
-        font-size: 0.65rem;
-        letter-spacing: 4px;
-        color: var(--dim);
-        margin-bottom: 16px;
-    }
+    .pin-label { font-size: 0.6rem; letter-spacing: 4px; color: #444; margin-bottom: 14px; }
 
     .pin-display {
         font-family: 'Orbitron', sans-serif;
-        font-size: 3.8rem;
+        font-size: 3.4rem;
         font-weight: 900;
-        letter-spacing: 14px;
+        letter-spacing: 12px;
         color: var(--green);
         text-shadow: 0 0 30px rgba(0,255,204,0.5);
-        margin-bottom: 28px;
-        padding: 20px 0;
+        margin-bottom: 24px;
+        padding: 18px 0;
         border-top: 1px solid var(--border);
         border-bottom: 1px solid var(--border);
     }
-
-    /* Scramble view */
-    .phase-tag {
-        font-size: 0.6rem;
-        letter-spacing: 3px;
-        color: var(--dim);
-        margin-bottom: 20px;
-    }
-
-    .phase-tag.active { color: var(--green); }
 
     .phases {
         display: flex;
         justify-content: center;
         gap: 8px;
-        margin-bottom: 24px;
+        margin-bottom: 6px;
     }
 
-    .phase-dot {
-        width: 24px;
-        height: 3px;
-        background: var(--dim);
-        transition: background 0.3s;
-    }
-
+    .phase-dot { width: 28px; height: 3px; background: var(--dim); transition: background 0.3s; }
     .phase-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
 
-    .cmd-box {
-        min-height: 90px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 0 28px;
-        border: 1px solid var(--border);
-        padding: 20px;
-        position: relative;
+    .phase-label { font-size: 0.58rem; letter-spacing: 3px; color: #333; margin-bottom: 18px; }
+
+    .progress-bar { height: 2px; background: var(--border); margin-bottom: 6px; }
+    .progress-fill { height: 100%; background: var(--green); transition: width 0.25s ease; box-shadow: 0 0 6px var(--green); }
+
+    .step-count { font-size: 0.55rem; color: #2a2a2a; letter-spacing: 2px; margin-bottom: 18px; }
+
+    .keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
-    .cmd-text {
+    .key {
         font-family: 'Orbitron', sans-serif;
-        font-size: 2rem;
+        font-size: 1.3rem;
         font-weight: 700;
+        padding: 16px 0;
+        border: 1px solid #1a1a1a;
+        background: #0a0a0a;
+        color: #2a2a2a;
+        cursor: default;
+        transition: all 0.15s;
+    }
+
+    .key.highlight {
+        border-color: var(--green);
+        color: var(--green);
+        background: rgba(0,255,204,0.07);
+        animation: pulse 0.7s ease-in-out infinite alternate;
+    }
+
+    .key.highlight-del {
+        border-color: var(--red);
         color: var(--red);
-        text-shadow: 0 0 20px rgba(255,59,48,0.4);
-        letter-spacing: 2px;
-        transition: opacity 0.15s;
+        background: rgba(255,59,48,0.07);
+        animation: pulse-red 0.7s ease-in-out infinite alternate;
     }
 
-    .cmd-text.enter { color: var(--green); text-shadow: 0 0 20px rgba(0,255,204,0.4); }
-
-    .progress-bar {
-        height: 2px;
-        background: var(--border);
-        margin-bottom: 20px;
-        position: relative;
-        overflow: hidden;
+    @keyframes pulse {
+        from { box-shadow: 0 0 8px rgba(0,255,204,0.15); }
+        to   { box-shadow: 0 0 24px rgba(0,255,204,0.55); }
     }
 
-    .progress-fill {
-        height: 100%;
-        background: var(--green);
-        transition: width 0.3s ease;
-        box-shadow: 0 0 8px var(--green);
+    @keyframes pulse-red {
+        from { box-shadow: 0 0 8px rgba(255,59,48,0.15); }
+        to   { box-shadow: 0 0 24px rgba(255,59,48,0.55); }
     }
 
-    .step-count {
-        font-size: 0.6rem;
-        color: var(--dim);
-        letter-spacing: 2px;
-        margin-bottom: 16px;
-    }
+    .key-zero { grid-column: 2; }
 
-    .error-msg {
-        color: var(--red);
+    .key-del {
+        width: 100%;
+        font-family: 'Orbitron', sans-serif;
         font-size: 0.7rem;
-        letter-spacing: 1px;
-        margin-top: 10px;
-        min-height: 18px;
+        letter-spacing: 3px;
+        padding: 13px 0;
+        border: 1px solid #1a1a1a;
+        background: #0a0a0a;
+        color: #2a2a2a;
+        cursor: default;
+        transition: all 0.15s;
+        margin-bottom: 16px;
+        display: block;
+        text-align: center;
     }
+
+    .error-msg { color: var(--red); font-size: 0.65rem; letter-spacing: 1px; margin-top: 8px; min-height: 16px; }
 </style>
 ```
 
@@ -243,7 +216,6 @@
 <body>
 
 ```
-<!-- AUTH -->
 <div id="auth-gate" class="card">
     <div class="logo">VAULT<span>_</span></div>
     <input type="email" id="email" placeholder="EMAIL" autocomplete="email">
@@ -252,31 +224,40 @@
     <div class="error-msg" id="auth-error"></div>
 </div>
 
-<!-- APP -->
 <div id="app-container" class="card hidden">
 
-    <!-- PIN display -->
     <div id="display-view" class="hidden">
         <div class="logo">VAULT<span>_</span></div>
-        <div class="pin-label">ACTIVE PIN</div>
+        <div class="pin-label">SCREEN TIME PIN</div>
         <div class="pin-display" id="stored-pin-val">----</div>
         <button class="btn" onclick="startScramble()">GENERATE NEW PIN</button>
         <button class="btn btn-danger" onclick="doLogout()">SIGN OUT</button>
     </div>
 
-    <!-- Scramble -->
     <div id="scramble-view" class="hidden">
         <div class="logo">VAULT<span>_</span></div>
         <div class="phases">
             <div class="phase-dot active" id="dot-1"></div>
             <div class="phase-dot" id="dot-2"></div>
         </div>
-        <div class="phase-tag" id="phase-label">PHASE 1 — ENTRY</div>
+        <div class="phase-label" id="phase-label">PHASE 1 — ENTRY</div>
         <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
         <div class="step-count" id="step-count">STEP 1</div>
-        <div class="cmd-box">
-            <div class="cmd-text" id="cmd-text">—</div>
+
+        <div class="keypad">
+            <div class="key" id="k1">1</div>
+            <div class="key" id="k2">2</div>
+            <div class="key" id="k3">3</div>
+            <div class="key" id="k4">4</div>
+            <div class="key" id="k5">5</div>
+            <div class="key" id="k6">6</div>
+            <div class="key" id="k7">7</div>
+            <div class="key" id="k8">8</div>
+            <div class="key" id="k9">9</div>
+            <div class="key key-zero" id="k0">0</div>
         </div>
+        <div class="key-del" id="kdel">DELETE</div>
+
         <button class="btn" onclick="nextStep()">NEXT</button>
     </div>
 
@@ -305,7 +286,6 @@
     let index = 0;
     let p1Len = 0;
 
-    // ── Auth ─────────────────────────────────────────────
     async function handleAuth() {
         const e = document.getElementById('email').value.trim();
         const p = document.getElementById('pw').value;
@@ -316,12 +296,8 @@
             await auth.signInWithEmailAndPassword(e, p);
         } catch (err) {
             if (err.code === 'auth/user-not-found') {
-                // New user — create account
-                try {
-                    await auth.createUserWithEmailAndPassword(e, p);
-                } catch (createErr) {
-                    errEl.textContent = createErr.message.toUpperCase();
-                }
+                try { await auth.createUserWithEmailAndPassword(e, p); }
+                catch (ce) { errEl.textContent = ce.message.toUpperCase(); }
             } else {
                 errEl.textContent = 'INVALID CREDENTIALS';
             }
@@ -345,99 +321,79 @@
         else { startScramble(); }
     }
 
-    function doLogout() {
-        auth.signOut();
-    }
+    function doLogout() { auth.signOut(); }
 
-    // ── PIN display ───────────────────────────────────────
     function showPIN(pin) {
         document.getElementById('scramble-view').classList.add('hidden');
         document.getElementById('display-view').classList.remove('hidden');
         document.getElementById('stored-pin-val').textContent = pin;
     }
 
-    // ── Scramble logic ────────────────────────────────────
-    /*
-     * iPhone screen time rules:
-     *  - Entering the 4th digit auto-submits — no DELETE allowed after it.
-     *  - So the 4th digit in any sequence MUST be the correct target digit.
-     *  - Digits 1–3 can be correct or random, and can be followed by DELETE.
-     *
-     * generatePath builds a sequence of "ENTER x" / "DELETE" instructions
-     * that always ends with the 4 correct digits in order, respecting the rule above.
-     */
+    // Path generation
+    // - First 3 correct digits woven through random noise
+    // - 4th digit always correct and always last (iPhone auto-submits)
+    // - Noise = enter random digit + immediately delete (net zero, never triggers 4th slot)
     function generatePath(target) {
-        // Strategy: place each correct digit one at a time, with random
-        // noise (enter fake + delete) woven in between. The 4th correct
-        // digit is always last so iPhone auto-submits the right PIN.
         const path = [];
-        let shadow = []; // what is currently typed on screen
+        let shadow = [];
 
-        function addNoise() {
-            // Add 1-4 random enter/delete pairs that leave shadow unchanged
-            const count = 1 + Math.floor(Math.random() * 4);
-            for (let i = 0; i < count; i++) {
-                if (shadow.length < 3) {
-                    // Enter a random digit then delete it
-                    const fake = Math.floor(Math.random() * 10).toString();
-                    path.push("ENTER " + fake);
-                    shadow.push(fake);
-                    path.push("DELETE");
-                    shadow.pop();
-                }
-            }
-        }
-
-        function deleteBack(n) {
-            // Delete n digits from shadow
-            for (let i = 0; i < n; i++) {
-                path.push("DELETE");
+        function noise() {
+            if (shadow.length < 3) {
+                const d = Math.floor(Math.random() * 10).toString();
+                path.push({ type: 'enter', digit: d });
+                shadow.push(d);
+                path.push({ type: 'delete' });
                 shadow.pop();
             }
         }
 
-        // Place digits 0, 1, 2 with noise and occasional backtrack
+        function deleteBack(n) {
+            for (let i = 0; i < n; i++) {
+                path.push({ type: 'delete' });
+                shadow.pop();
+            }
+        }
+
         for (let i = 0; i < 3; i++) {
-            // Sometimes add noise before entering correct digit
-            if (Math.random() < 0.6) addNoise();
+            // Random noise before correct digit
+            const nb = Math.floor(Math.random() * 3);
+            for (let n = 0; n < nb; n++) noise();
 
             // Enter correct digit
-            path.push("ENTER " + target[i]);
+            path.push({ type: 'enter', digit: target[i] });
             shadow.push(target[i]);
 
-            // Sometimes enter a wrong digit after, then delete back to here
+            // Sometimes add wrong digits after, then delete back
             if (Math.random() < 0.5 && shadow.length < 3) {
-                const fake = Math.floor(Math.random() * 10).toString();
-                path.push("ENTER " + fake);
-                shadow.push(fake);
-                if (Math.random() < 0.5 && shadow.length < 3) {
-                    const fake2 = Math.floor(Math.random() * 10).toString();
-                    path.push("ENTER " + fake2);
-                    shadow.push(fake2);
+                const f1 = Math.floor(Math.random() * 10).toString();
+                path.push({ type: 'enter', digit: f1 });
+                shadow.push(f1);
+                if (Math.random() < 0.4 && shadow.length < 3) {
+                    const f2 = Math.floor(Math.random() * 10).toString();
+                    path.push({ type: 'enter', digit: f2 });
+                    shadow.push(f2);
                 }
-                // Delete back to after correct digit i
                 deleteBack(shadow.length - (i + 1));
             }
 
-            // Sometimes delete back past correct digit and re-enter
+            // Sometimes backtrack past correct digit and re-enter
             if (Math.random() < 0.3 && i > 0) {
-                const backBy = 1 + Math.floor(Math.random() * (i + 1));
-                deleteBack(backBy);
-                // Re-enter deleted correct digits
+                const back = 1 + Math.floor(Math.random() * (i + 1));
+                deleteBack(back);
                 for (let j = shadow.length; j <= i; j++) {
-                    if (Math.random() < 0.5) addNoise();
-                    path.push("ENTER " + target[j]);
+                    const nb2 = Math.floor(Math.random() * 2);
+                    for (let n = 0; n < nb2; n++) noise();
+                    path.push({ type: 'enter', digit: target[j] });
                     shadow.push(target[j]);
                 }
             }
         }
 
-        // Final noise before 4th digit (but never enter 4th slot with wrong digit)
-        if (Math.random() < 0.5) addNoise();
+        // Optional noise before final digit
+        if (Math.random() < 0.5) noise();
 
-        // Enter 4th correct digit last — iPhone auto-submits here
-        path.push("ENTER " + target[3]);
-        shadow.push(target[3]);
+        // 4th digit — always correct, always last
+        path.push({ type: 'enter', digit: target[3] });
 
         return path;
     }
@@ -445,7 +401,6 @@
     function startScramble() {
         document.getElementById('display-view').classList.add('hidden');
         document.getElementById('scramble-view').classList.remove('hidden');
-
         secretPin = Math.floor(1000 + Math.random() * 9000).toString();
         const p1 = generatePath(secretPin);
         const p2 = generatePath(secretPin);
@@ -455,26 +410,32 @@
         updateUI();
     }
 
+    function clearHighlights() {
+        ['1','2','3','4','5','6','7','8','9','0'].forEach(d => {
+            document.getElementById('k' + d).className = 'key' + (d === '0' ? ' key-zero' : '');
+        });
+        document.getElementById('kdel').className = 'key-del';
+    }
+
     function updateUI() {
         const isPhase2 = index >= p1Len;
         const step = masterSteps[index];
-        const isEnter = step && step.startsWith("ENTER");
         const total = masterSteps.length;
         const pct = Math.round((index / total) * 100);
 
         document.getElementById('dot-1').classList.toggle('active', !isPhase2);
         document.getElementById('dot-2').classList.toggle('active', isPhase2);
         document.getElementById('phase-label').textContent = isPhase2 ? 'PHASE 2 — CONFIRM' : 'PHASE 1 — ENTRY';
-        document.getElementById('step-count').textContent = `STEP ${index + 1} OF ${total}`;
+        document.getElementById('step-count').textContent = 'STEP ' + (index + 1) + ' OF ' + total;
         document.getElementById('prog').style.width = pct + '%';
 
-        const cmdEl = document.getElementById('cmd-text');
-        cmdEl.style.opacity = 0;
-        setTimeout(() => {
-            cmdEl.textContent = step || '—';
-            cmdEl.className = 'cmd-text' + (isEnter ? ' enter' : '');
-            cmdEl.style.opacity = 1;
-        }, 100);
+        clearHighlights();
+
+        if (step.type === 'delete') {
+            document.getElementById('kdel').classList.add('highlight-del');
+        } else {
+            document.getElementById('k' + step.digit).classList.add('highlight');
+        }
     }
 
     async function nextStep() {
@@ -482,6 +443,7 @@
         if (index < masterSteps.length) {
             updateUI();
         } else {
+            clearHighlights();
             await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
             await auth.signOut();
             location.reload();
