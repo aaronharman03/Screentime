@@ -6,12 +6,11 @@
     <title>Vault Controller</title>
     <style>
         body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { border: 2px solid #00ffcc; padding: 30px; width: 380px; text-align: center; box-shadow: 0 0 20px #00ffcc44; }
-        .instruction { font-size: 3.5rem; font-weight: bold; margin: 20px 0; color: #ff3b30; min-height: 100px; display: flex; align-items: center; justify-content: center; }
-        button { background: #00ffcc; color: #000; border: none; padding: 20px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1.2rem; border-radius: 4px; }
-        .hidden { display: none !important; }
-        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 15px; width: 85%; margin: 10px 0; text-align: center; }
-        .status { color: #555; font-size: 0.7rem; margin-top: 10px; text-transform: uppercase; }
+        .card { border: 2px solid #00ffcc; padding: 40px; width: 420px; text-align: center; }
+        .instruction { font-size: 4rem; font-weight: bold; margin: 30px 0; color: #ff3b30; min-height: 120px; display: flex; align-items: center; justify-content: center; }
+        button { background: #00ffcc; color: #000; border: none; padding: 20px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1.2rem; }
+        .hidden { display: none; }
+        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 15px; width: 90%; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -21,19 +20,17 @@
         <input type="email" id="email" placeholder="EMAIL">
         <input type="password" id="pw" placeholder="LONG_PASSWORD">
         <button onclick="handleAuth()">INITIALIZE</button>
-        <div id="log" class="status">SYSTEM OFFLINE</div>
     </div>
 
     <div id="app-container" class="card hidden">
-        
         <div id="display-view" class="hidden">
             <p>ACTIVE_PIN</p>
-            <h1 id="stored-pin-val" style="font-size: 4.5rem; letter-spacing: 10px;">----</h1>
-            <button onclick="startScramble()">NEW_SCRAMBLE</button>
+            <h1 id="stored-pin-val" style="font-size: 5rem; letter-spacing: 15px;">----</h1>
+            <button onclick="startScramble()">NEW_LOCK</button>
         </div>
 
         <div id="scramble-view" class="hidden">
-            <div id="phase-label" style="color:#00ffcc; font-size: 0.8rem;">PHASE 1: ENTRY</div>
+            <div id="phase-label" style="color:#00ffcc">PHASE 1: ENTRY</div>
             <div class="instruction" id="cmd-text">READY</div>
             <button onclick="nextStep()">NEXT_COMMAND</button>
         </div>
@@ -58,19 +55,15 @@
         const db = firebase.firestore();
 
         let secretPin = "";
-        let masterSteps = [];
-        let idx = 0;
+        let masterPath = [];
+        let index = 0;
         let p1Len = 0;
 
         async function handleAuth() {
-            document.getElementById('log').innerText = "AUTH_PENDING...";
             const e = document.getElementById('email').value;
             const p = document.getElementById('pw').value;
-            try { 
-                await auth.signInWithEmailAndPassword(e, p); 
-            } catch (err) { 
-                await auth.createUserWithEmailAndPassword(e, p); 
-            }
+            try { await auth.signInWithEmailAndPassword(e, p); }
+            catch { await auth.createUserWithEmailAndPassword(e, p); }
         }
 
         auth.onAuthStateChanged(user => {
@@ -82,16 +75,11 @@
         });
 
         async function checkVault() {
-            try {
-                const doc = await db.collection("users").doc(auth.currentUser.uid).get();
-                if(doc.exists && doc.data().pin) {
-                    showDisplay(doc.data().pin);
-                } else {
-                    startScramble();
-                }
-            } catch (e) {
-                console.log("Database fetch failed, starting fresh scramble.");
-                startScramble(); // Fallback so screen isn't blank
+            const doc = await db.collection("users").doc(auth.currentUser.uid).get();
+            if(doc.exists && doc.data().pin) {
+                showDisplay(doc.data().pin);
+            } else {
+                startScramble();
             }
         }
 
@@ -100,6 +88,8 @@
             let shadow = [];
             let path = [];
             while (shadow.join('') !== target.join('')) {
+                // THE 4TH DIGIT FIX: 
+                // If 3 digits are in, the next move MUST be the 4th real digit.
                 if (shadow.length === 3) {
                     let d = target[3];
                     path.push("ENTER " + d); shadow.push(d);
@@ -123,28 +113,24 @@
             let p1 = generatePath(secretPin);
             let p2 = generatePath(secretPin);
             p1Len = p1.length;
-            masterSteps = [...p1, ...p2];
-            idx = 0;
+            masterPath = [...p1, ...p2];
+            index = 0;
             updateUI();
         }
 
         function updateUI() {
-            document.getElementById('phase-label').innerText = idx >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
-            document.getElementById('cmd-text').innerText = masterSteps[idx];
+            document.getElementById('phase-label').innerText = index >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
+            document.getElementById('cmd-text').innerText = masterPath[index];
         }
 
         async function nextStep() {
-            idx++;
-            if (idx < masterSteps.length) {
+            index++;
+            if (index < masterPath.length) {
                 updateUI();
             } else {
-                try {
-                    await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
-                } catch (e) {
-                    alert("WARNING: Database Save Failed! Screenshot your PIN: " + secretPin);
-                }
-                alert("VAULT SEALED.");
-                auth.signOut().then(() => location.reload());
+                await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
+                alert("SUCCESS: LOCKED.");
+                logout();
             }
         }
 
