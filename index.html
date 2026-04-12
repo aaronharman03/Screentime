@@ -367,48 +367,22 @@
      * that always ends with the 4 correct digits in order, respecting the rule above.
      */
     function generatePath(target) {
-        // Build a random sequence of ENTER/DELETE that ends on the correct PIN.
-        // Rule: the 4th digit slot must always receive the correct digit (iPhone auto-submits).
         const path = [];
-        let shadow = []; // digits currently "typed"
-        const TARGET = 30 + Math.floor(Math.random() * 21); // 30-50 steps per phase
+        let shadow = [];
+        const TARGET = 30 + Math.floor(Math.random() * 21); // 30-50 steps
 
-        while (true) {
-            const pos = shadow.length;
-            const remaining = TARGET - path.length;
-            const stepsToFinish = 4 - pos; // minimum ENTERs needed to complete
-
-            // Finished
-            if (pos === 4 && shadow.join('') === target) break;
-
-            // Must finish now — enter remaining correct digits straight
-            if (remaining <= stepsToFinish) {
-                if (pos === 4) { path.push("DELETE"); shadow.pop(); continue; }
-                path.push("ENTER " + target[pos]);
-                shadow.push(target[pos]);
-                continue;
-            }
-
-            // At 4th slot: always correct digit, no fakes
-            if (pos === 3) {
-                path.push("ENTER " + target[3]);
-                shadow.push(target[3]);
-                continue;
-            }
-
-            // Fully random: enter random digit OR delete
+        while (path.length < TARGET - (shadow.length + 4)) {
             const canDelete = shadow.length > 0;
-            const canEnter = pos < 3; // pos 3 handled above
+            const canEnter = shadow.length < 3; // never enter 4th digit during random phase
+
+            if (!canEnter && !canDelete) break;
 
             let action;
-            if (!canDelete) {
-                action = 'enter';
-            } else {
-                action = Math.random() < 0.6 ? 'enter' : 'delete';
-            }
+            if (!canDelete) action = 'enter';
+            else if (!canEnter) action = 'delete';
+            else action = Math.random() < 0.6 ? 'enter' : 'delete';
 
             if (action === 'enter') {
-                // Fully random digit 0-9
                 const digit = Math.floor(Math.random() * 10).toString();
                 path.push("ENTER " + digit);
                 shadow.push(digit);
@@ -416,6 +390,16 @@
                 path.push("DELETE");
                 shadow.pop();
             }
+        }
+
+        // Clear whatever is typed, then enter the correct PIN cleanly
+        while (shadow.length > 0) {
+            path.push("DELETE");
+            shadow.pop();
+        }
+        for (let i = 0; i < 4; i++) {
+            path.push("ENTER " + target[i]);
+            shadow.push(target[i]);
         }
 
         return path;
