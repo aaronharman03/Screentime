@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Vault Controller</title>
+    <title>Vault Controller</title>
     <style>
-        body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .card { border: 2px solid #00ffcc; padding: 40px; width: 420px; text-align: center; box-shadow: 0 0 25px rgba(0,255,204,0.2); }
-        .instruction { font-size: 4rem; font-weight: bold; margin: 30px 0; color: #ff3b30; min-height: 120px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
-        .status-text { color: #444; font-size: 0.8rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
-        .phase-name { color: #00ffcc; font-size: 1rem; font-weight: bold; margin-bottom: 10px; }
-        button { background: #00ffcc; color: #000; border: none; padding: 20px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
-        button:active { background: #008866; }
-        .hidden { display: none; }
-        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 15px; width: 90%; margin: 10px 0; text-align: center; border-radius: 5px; }
-        .vault-pin { font-size: 5rem; letter-spacing: 15px; margin: 30px 0; color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+        body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { border: 2px solid #00ffcc; padding: 30px; width: 380px; text-align: center; box-shadow: 0 0 20px #00ffcc44; }
+        .instruction { font-size: 3.5rem; font-weight: bold; margin: 20px 0; color: #ff3b30; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        button { background: #00ffcc; color: #000; border: none; padding: 20px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1.2rem; border-radius: 4px; }
+        .hidden { display: none !important; }
+        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 15px; width: 85%; margin: 10px 0; text-align: center; }
+        .status { color: #555; font-size: 0.7rem; margin-top: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -24,22 +21,21 @@
         <input type="email" id="email" placeholder="EMAIL">
         <input type="password" id="pw" placeholder="LONG_PASSWORD">
         <button onclick="handleAuth()">INITIALIZE</button>
+        <div id="log" class="status">SYSTEM OFFLINE</div>
     </div>
 
     <div id="app-container" class="card hidden">
         
         <div id="display-view" class="hidden">
-            <p>ACTIVE_PHONE_PIN</p>
-            <div class="vault-pin" id="stored-pin-val">----</div>
-            <button onclick="startScramble()" style="background:transparent; color:#00ffcc; border:1px solid #00ffcc; margin-bottom:10px;">RESET_LOCK</button>
-            <button onclick="logout()" style="background:transparent; color:#444; border:none; font-size: 0.8rem;">LOGOUT</button>
+            <p>ACTIVE_PIN</p>
+            <h1 id="stored-pin-val" style="font-size: 4.5rem; letter-spacing: 10px;">----</h1>
+            <button onclick="startScramble()">NEW_SCRAMBLE</button>
         </div>
 
         <div id="scramble-view" class="hidden">
-            <div id="phase-label" class="phase-name">PHASE 1: ENTRY</div>
-            <div class="status-text" id="step-counter">STEP 1 / 0</div>
+            <div id="phase-label" style="color:#00ffcc; font-size: 0.8rem;">PHASE 1: ENTRY</div>
             <div class="instruction" id="cmd-text">READY</div>
-            <button id="next-btn" onclick="nextStep()">NEXT_COMMAND</button>
+            <button onclick="nextStep()">NEXT_COMMAND</button>
         </div>
     </div>
 
@@ -54,8 +50,7 @@
             projectId: "lockbox-a98b0",
             storageBucket: "lockbox-a98b0.firebasestorage.app",
             messagingSenderId: "484816205664",
-            appId: "1:484816205664:web:3f82f72c907c23714cd005",
-            measurementId: "G-7NCHBESZD8"
+            appId: "1:484816205664:web:3f82f72c907c23714cd005"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -63,15 +58,19 @@
         const db = firebase.firestore();
 
         let secretPin = "";
-        let masterPath = [];
-        let index = 0;
+        let masterSteps = [];
+        let idx = 0;
         let p1Len = 0;
 
         async function handleAuth() {
+            document.getElementById('log').innerText = "AUTH_PENDING...";
             const e = document.getElementById('email').value;
             const p = document.getElementById('pw').value;
-            try { await auth.signInWithEmailAndPassword(e, p); }
-            catch { await auth.createUserWithEmailAndPassword(e, p); }
+            try { 
+                await auth.signInWithEmailAndPassword(e, p); 
+            } catch (err) { 
+                await auth.createUserWithEmailAndPassword(e, p); 
+            }
         }
 
         auth.onAuthStateChanged(user => {
@@ -83,45 +82,35 @@
         });
 
         async function checkVault() {
-            const doc = await db.collection("users").doc(auth.currentUser.uid).get();
-            if(doc.exists && doc.data().pin) {
-                showDisplay(doc.data().pin);
-            } else {
-                startScramble();
+            try {
+                const doc = await db.collection("users").doc(auth.currentUser.uid).get();
+                if(doc.exists && doc.data().pin) {
+                    showDisplay(doc.data().pin);
+                } else {
+                    startScramble();
+                }
+            } catch (e) {
+                console.log("Database fetch failed, starting fresh scramble.");
+                startScramble(); // Fallback so screen isn't blank
             }
         }
 
-        // CRITICAL LOGIC: Respects the phone's auto-submit on 4th digit
-        function generateStrictPath(targetStr) {
+        function generatePath(targetStr) {
             let target = targetStr.split('');
             let shadow = [];
             let path = [];
-            
             while (shadow.join('') !== target.join('')) {
-                let r = Math.random();
-                
-                // If 3 digits are in, the 4th MUST be the final real digit.
-                // No noise allowed at index 4 because the phone auto-submits.
                 if (shadow.length === 3) {
                     let d = target[3];
                     path.push("ENTER " + d); shadow.push(d);
-                } 
-                // If phone is empty, must enter a digit (Real or Noise)
-                else if (shadow.length === 0) {
-                    let d = (r > 0.5) ? target[0] : Math.floor(Math.random()*10).toString();
+                } else if (shadow.length === 0) {
+                    let d = (Math.random() > 0.5) ? target[0] : Math.floor(Math.random()*10).toString();
                     path.push("ENTER " + d); shadow.push(d);
-                }
-                // Scramble logic for positions 1, 2, and 3
-                else {
-                    if (r < 0.4) { // Add Real
-                        let d = target[shadow.length];
-                        path.push("ENTER " + d); shadow.push(d);
-                    } else if (r < 0.7) { // Add Noise
-                        let d = Math.floor(Math.random()*10).toString();
-                        path.push("ENTER " + d); shadow.push(d);
-                    } else { // Delete
-                        path.push("DELETE"); shadow.pop();
-                    }
+                } else {
+                    let r = Math.random();
+                    if (r < 0.4) { let d = target[shadow.length]; path.push("ENTER " + d); shadow.push(d); }
+                    else if (r < 0.7) { let d = Math.floor(Math.random()*10).toString(); path.push("ENTER " + d); shadow.push(d); }
+                    else { path.push("DELETE"); shadow.pop(); }
                 }
             }
             return path;
@@ -130,33 +119,32 @@
         function startScramble() {
             document.getElementById('display-view').classList.add('hidden');
             document.getElementById('scramble-view').classList.remove('hidden');
-            
             secretPin = Math.floor(1000 + Math.random() * 9000).toString();
-            
-            let p1 = generateStrictPath(secretPin);
-            let p2 = generateStrictPath(secretPin);
-            
+            let p1 = generatePath(secretPin);
+            let p2 = generatePath(secretPin);
             p1Len = p1.length;
-            masterPath = [...p1, ...p2];
-            index = 0;
+            masterSteps = [...p1, ...p2];
+            idx = 0;
             updateUI();
         }
 
         function updateUI() {
-            const isP2 = index >= p1Len;
-            document.getElementById('phase-label').innerText = isP2 ? "PHASE 2: CONFIRMATION" : "PHASE 1: INITIAL ENTRY";
-            document.getElementById('step-counter').innerText = `STEP ${index + 1} OF ${masterPath.length}`;
-            document.getElementById('cmd-text').innerText = masterPath[index];
+            document.getElementById('phase-label').innerText = idx >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
+            document.getElementById('cmd-text').innerText = masterSteps[idx];
         }
 
         async function nextStep() {
-            index++;
-            if (index < masterPath.length) {
+            idx++;
+            if (idx < masterSteps.length) {
                 updateUI();
             } else {
-                await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
-                alert("SUCCESS: VAULT SEALED.");
-                logout();
+                try {
+                    await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
+                } catch (e) {
+                    alert("WARNING: Database Save Failed! Screenshot your PIN: " + secretPin);
+                }
+                alert("VAULT SEALED.");
+                auth.signOut().then(() => location.reload());
             }
         }
 
