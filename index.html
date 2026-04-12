@@ -2,31 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Sync</title>
+    <title>Master Vault</title>
     <style>
-        body { background: #000; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { border: 1px solid #00ffcc; padding: 40px; width: 400px; text-align: center; }
-        .instruction { font-size: 3.5rem; font-weight: bold; margin: 40px 0; color: #ff3b30; min-height: 100px; display: flex; align-items: center; justify-content: center; }
-        button { background: #00ffcc; color: #000; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 12px; width: 90%; margin: 10px 0; text-align: center; }
+        body { background: #000; color: #00ffcc; font-family: monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { border: 2px solid #00ffcc; padding: 30px; width: 350px; text-align: center; }
+        .instruction { font-size: 3.5rem; font-weight: bold; margin: 30px 0; color: #ff3b30; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        button { background: #00ffcc; color: #000; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; }
         .hidden { display: none; }
+        input { background: #111; color: #00ffcc; border: 1px solid #333; padding: 10px; width: 90%; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="auth-gate" class="card">
-        <h1>VAULT_SYNC</h1>
+        <h2>SYNC_VAULT</h2>
         <input type="email" id="email" placeholder="EMAIL">
-        <input type="password" id="pw" placeholder="PASSWORD">
-        <button onclick="handleAuth()">INITIALIZE</button>
+        <input type="password" id="pw" placeholder="LONG_PASSWORD">
+        <button onclick="handleAuth()">LOGIN</button>
     </div>
 
     <div id="app-container" class="card hidden">
-        <div id="scramble-view">
-            <div id="phase-label" style="font-size: 0.8rem; color:#00ffcc">PHASE 1: ENTRY</div>
+        <div id="display-view" class="hidden">
+            <p>ACTIVE_PIN</p>
+            <h1 id="stored-pin-val" style="font-size: 4rem; letter-spacing: 10px;">----</h1>
+            <button onclick="startScramble()">NEW_LOCK</button>
+        </div>
+        <div id="scramble-view" class="hidden">
+            <div id="phase-name" style="font-size: 0.7rem; color: #444;">PHASE 1</div>
             <div class="instruction" id="cmd-text">READY</div>
-            <button onclick="nextStep()">NEXT_STEP</button>
+            <button onclick="nextStep()">NEXT</button>
         </div>
     </div>
 
@@ -49,75 +53,84 @@
         const db = firebase.firestore();
 
         let secretPin = "";
-        let steps = [];
-        let currentIdx = 0;
+        let masterSteps = [];
+        let index = 0;
         let p1Len = 0;
 
         async function handleAuth() {
             const e = document.getElementById('email').value;
             const p = document.getElementById('pw').value;
-            try { await auth.signInWithEmailAndPassword(e, p); }
-            catch { await auth.createUserWithEmailAndPassword(e, p); }
+            try { await auth.signInWithEmailAndPassword(e,p); }
+            catch { await auth.createUserWithEmailAndPassword(e,p); }
         }
 
         auth.onAuthStateChanged(user => {
             if(user) {
                 document.getElementById('auth-gate').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                startNewScramble();
+                checkDb();
             }
         });
 
-        // GENERATOR: Tracks shadow state to respect iPhone auto-submit
-        function generatePath(target) {
-            let tArr = target.split('');
+        async function checkDb() {
+            const doc = await db.collection("users").doc(auth.currentUser.uid).get();
+            if(doc.exists) { showPIN(doc.data().pin); }
+            else { startScramble(); }
+        }
+
+        function generatePath(targetStr) {
+            let target = targetStr.split('');
             let shadow = [];
             let path = [];
-            
-            while (shadow.join('') !== target) {
-                // FIXED: If 3 digits are on phone, next move MUST be the 4th real digit.
-                if (shadow.length === 3) {
-                    path.push("ENTER " + tArr[3]); shadow.push(tArr[3]);
-                } else if (shadow.length === 0) {
-                    let d = (Math.random() > 0.5) ? tArr[0] : Math.floor(Math.random()*10).toString();
+            while(shadow.join('') !== target.join('') || path.length < 40) {
+                if(shadow.length === 4 && shadow.join('') !== target.join('')) { path.push("DELETE"); shadow.pop(); }
+                else if(shadow.length === 0) {
+                    let d = (Math.random() > 0.5) ? target[0] : Math.floor(Math.random()*10).toString();
                     path.push("ENTER " + d); shadow.push(d);
                 } else {
                     let r = Math.random();
-                    if (r < 0.4) { let d = tArr[shadow.length]; path.push("ENTER " + d); shadow.push(d); }
-                    else if (r < 0.7) { let d = Math.floor(Math.random()*10).toString(); path.push("ENTER " + d); shadow.push(d); }
+                    if(r < 0.4 && shadow.length < 4) { let d = target[shadow.length]; path.push("ENTER " + d); shadow.push(d); }
+                    else if(r < 0.7 && shadow.length < 4) { let d = Math.floor(Math.random()*10).toString(); path.push("ENTER " + d); shadow.push(d); }
                     else { path.push("DELETE"); shadow.pop(); }
                 }
             }
             return path;
         }
 
-        function startNewScramble() {
+        function startScramble() {
+            document.getElementById('display-view').classList.add('hidden');
+            document.getElementById('scramble-view').classList.remove('hidden');
             secretPin = Math.floor(1000 + Math.random() * 9000).toString();
             let p1 = generatePath(secretPin);
             let p2 = generatePath(secretPin);
-            
             p1Len = p1.length;
-            steps = [...p1, ...p2];
-            currentIdx = 0;
-            renderStep();
+            masterSteps = [...p1, ...p2];
+            index = 0;
+            updateUI();
         }
 
-        function renderStep() {
-            document.getElementById('phase-label').innerText = currentIdx >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
-            document.getElementById('cmd-text').innerText = steps[currentIdx];
+        function updateUI() {
+            document.getElementById('phase-name').innerText = index >= p1Len ? "PHASE 2: CONFIRM" : "PHASE 1: ENTRY";
+            document.getElementById('cmd-text').innerText = masterSteps[index];
         }
 
         async function nextStep() {
-            currentIdx++;
-            if (currentIdx < steps.length) {
-                renderStep();
-            } else {
-                // Final save and reset
+            index++;
+            if(index < masterSteps.length) { updateUI(); }
+            else {
                 await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
-                alert("LOCKED.");
+                alert("DONE. LOGGING OUT.");
                 auth.signOut().then(() => location.reload());
             }
         }
+
+        function showPIN(pin) {
+            document.getElementById('scramble-view').classList.add('hidden');
+            document.getElementById('display-view').classList.remove('hidden');
+            document.getElementById('stored-pin-val').innerText = pin;
+        }
+
+        function logout() { auth.signOut().then(() => location.reload()); }
     </script>
 </body>
 </html>
