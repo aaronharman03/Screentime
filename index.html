@@ -367,58 +367,55 @@
      * that always ends with the 4 correct digits in order, respecting the rule above.
      */
     function generatePath(target) {
-        // target is a 4-char string e.g. "4829"
+        // Build a random sequence of ENTER/DELETE that ends on the correct PIN.
+        // Rule: the 4th digit slot must always receive the correct digit (iPhone auto-submits).
         const path = [];
-        let shadow = []; // current "typed" digits
+        let shadow = []; // digits currently "typed"
+        const TARGET = 30 + Math.floor(Math.random() * 21); // 30-50 steps per phase
 
-        // Safety cap to prevent any infinite loop
-        const MAX = 200;
+        while (true) {
+            const pos = shadow.length;
+            const remaining = TARGET - path.length;
+            const stepsToFinish = 4 - pos; // minimum ENTERs needed to complete
 
-        while (path.length < MAX) {
-            const pos = shadow.length; // 0-3 = how many digits currently entered
+            // Finished
+            if (pos === 4 && shadow.join('') === target) break;
 
-            if (pos === 4) {
-                // Sequence complete
-                if (shadow.join('') === target) break;
-                // Wrong — should never happen with correct logic, but safety:
-                path.push("DELETE"); shadow.pop();
+            // Must finish now — enter remaining correct digits straight
+            if (remaining <= stepsToFinish) {
+                if (pos === 4) { path.push("DELETE"); shadow.pop(); continue; }
+                path.push("ENTER " + target[pos]);
+                shadow.push(target[pos]);
                 continue;
             }
 
-            // At position 3 (4th digit): MUST enter correct digit, no fakes
+            // At 4th slot: always correct digit, no fakes
             if (pos === 3) {
                 path.push("ENTER " + target[3]);
                 shadow.push(target[3]);
                 continue;
             }
 
-            // Positions 0-2: random choice
-            const r = Math.random();
+            // Fully random: enter random digit OR delete
+            const canDelete = shadow.length > 0;
+            const canEnter = pos < 3; // pos 3 handled above
 
-            if (r < 0.45) {
-                // Enter the correct next digit
-                path.push("ENTER " + target[pos]);
-                shadow.push(target[pos]);
-            } else if (r < 0.75) {
-                // Enter a random (wrong) digit — but only if we can delete it after
-                // (i.e. not at pos 3, already handled above)
-                let fake;
-                do { fake = Math.floor(Math.random() * 10).toString(); }
-                while (fake === target[pos]); // ensure it's actually wrong
-                path.push("ENTER " + fake);
-                shadow.push(fake);
-            } else if (shadow.length > 0) {
-                // Delete
+            let action;
+            if (!canDelete) {
+                action = 'enter';
+            } else {
+                action = Math.random() < 0.6 ? 'enter' : 'delete';
+            }
+
+            if (action === 'enter') {
+                // Fully random digit 0-9
+                const digit = Math.floor(Math.random() * 10).toString();
+                path.push("ENTER " + digit);
+                shadow.push(digit);
+            } else {
                 path.push("DELETE");
                 shadow.pop();
             }
-            // If shadow is empty and we rolled delete, just skip (loop again)
-        }
-
-        // If we hit MAX without finishing, brute-force finish cleanly
-        if (shadow.join('') !== target) {
-            while (shadow.length > 0) { path.push("DELETE"); shadow.pop(); }
-            for (let i = 0; i < 4; i++) { path.push("ENTER " + target[i]); shadow.push(target[i]); }
         }
 
         return path;
@@ -465,7 +462,8 @@
             updateUI();
         } else {
             await db.collection("users").doc(auth.currentUser.uid).set({ pin: secretPin });
-            showPIN(secretPin);
+            await auth.signOut();
+            location.reload();
         }
     }
 </script>
